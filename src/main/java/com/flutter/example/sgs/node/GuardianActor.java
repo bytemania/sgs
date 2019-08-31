@@ -1,8 +1,10 @@
-package com.flutter.example.sgs.cluster.actor.guardian;
+package com.flutter.example.sgs.node;
 
 import akka.actor.AbstractActor;
 import akka.actor.Props;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class GuardianActor extends AbstractActor {
 
     private GuardianActor() {

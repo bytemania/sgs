@@ -1,7 +1,7 @@
 package com.flutter.example.sgs;
 
 import akka.actor.ActorSystem;
-import com.flutter.example.sgs.cluster.actor.guardian.GuardianActor;
+import com.flutter.example.sgs.node.GuardianActor;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +16,7 @@ public class Main {
             startup(args);
         }
         else {
-            startup("2551", "2552", "2553", "0");
+            startup("2551", "2552", "2553");
         }
     }
 
@@ -27,11 +27,8 @@ public class Main {
     private static void createSystem(String port) {
         Config config = ConfigFactory.parseString("akka.remote.artery.canonical.port=" + port)
                 .withFallback(ConfigFactory.load());
-
-        log.info("Creating actorsystem for port {}", port);
         ActorSystem system = ActorSystem.create("SgsShardingSystem", config);
         system.actorOf(GuardianActor.props());
-
     }
 
 }
