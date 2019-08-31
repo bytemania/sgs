@@ -18,6 +18,7 @@
 
         <scala.version>2.12</scala.version>
         <akka.version>2.5.23</akka.version>
+        <akka-stream-kafka.version>1.0.5</akka-stream-kafka.version>
 
         <slf4j-simple.version>1.7.28</slf4j-simple.version>
         <vavr.version>0.10.2</vavr.version>
@@ -67,6 +68,12 @@
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-cluster-sharding_${scala.version}</artifactId>
             <version>${akka.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-stream-kafka_${scala.version}</artifactId>
+            <version>${akka-stream-kafka.version}</version>
         </dependency>
 
         <dependency>

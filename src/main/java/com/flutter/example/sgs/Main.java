@@ -1,7 +1,7 @@
 package com.flutter.example.sgs;
 
 import akka.actor.ActorSystem;
-import com.flutter.example.sgs.node.GuardianActor;
+import com.flutter.example.sgs.node.actor.guardian.GuardianActor;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +12,7 @@ import java.util.Arrays;
 public class Main {
 
     public static void main(String[] args) {
-        if (args.length != 0) {
-            startup(args);
-        }
-        else {
             startup("2551", "2552", "2553");
-        }
     }
 
     private static void startup (String ... ports) {
