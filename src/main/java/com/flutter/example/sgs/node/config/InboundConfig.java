@@ -13,7 +13,7 @@ public class InboundConfig {
     public final Config KAFKA_CONSUMER_CONFIG;
 
     InboundConfig() {
-        Config CONFIG = ConfigFactory.load().getConfig("akka.kafka.consumer.kafka-clients");
+        final Config CONFIG = ConfigFactory.load().getConfig("akka.kafka.consumer.kafka-clients");
         TOPIC = CONFIG.getString("topic");
         CONSUMER_GROUP = CONFIG.getString("group.id");
         BOOTSTRAP_SERVERS = CONFIG.getString("bootstrap.servers");

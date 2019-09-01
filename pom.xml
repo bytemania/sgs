@@ -20,6 +20,8 @@
         <akka.version>2.5.23</akka.version>
         <akka-stream-kafka.version>1.0.5</akka-stream-kafka.version>
 
+        <jackson.version>2.9.9</jackson.version>
+
         <slf4j-simple.version>1.7.28</slf4j-simple.version>
         <vavr.version>0.10.2</vavr.version>
 
@@ -75,6 +77,19 @@
             <artifactId>akka-stream-kafka_${scala.version}</artifactId>
             <version>${akka-stream-kafka.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.slf4j</groupId>
