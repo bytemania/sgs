@@ -6,24 +6,29 @@ import akka.actor.ActorSystem;
 import akka.kafka.*;
 import akka.kafka.javadsl.Committer;
 import akka.kafka.javadsl.Consumer;
-import akka.stream.Materializer;
+import akka.stream.*;
 import akka.stream.javadsl.Keep;
 import akka.stream.javadsl.Source;
-import com.flutter.example.sgs.node.actor.feed.FeedShardMsg;
+import com.flutter.example.sgs.cluster.FeedShardMsg;
 import com.flutter.example.sgs.node.config.InboundConfig;
+import com.flutter.example.sgs.node.exception.ParseException;
 import com.flutter.example.sgs.node.util.Util;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+@Slf4j
 public class StreamFactory {
 
     public static Consumer.DrainingControl<Done> inboundStreamOf(InboundConfig inboundConfig,
                                                                  ActorSystem system,
-                                                                 Materializer materializer,
                                                                  ActorRef sender,
                                                                  ActorRef clusterShard) {
+
+        Materializer materializer = ActorMaterializer.create(system);
+
         ConsumerSettings<String, String> settings = ConsumerSettings.create(inboundConfig.KAFKA_CONSUMER_CONFIG,
                 new StringDeserializer(), new StringDeserializer());
 
@@ -39,6 +44,7 @@ public class StreamFactory {
                                         .thenApply(done -> msg._1.committableOffset()))
                 .toMat(Committer.sink(committerSettings.withMaxBatch(1)), Keep.both())
                 .mapMaterializedValue(Consumer::createDrainingControl)
+                .withAttributes(ActorAttributes.withSupervisionStrategy(StreamFactory::decider))
                 .run(materializer);
     }
 
@@ -46,6 +52,18 @@ public class StreamFactory {
                                          ActorRef clusterShard,
                                          FeedShardMsg feedShardMsg) {
         return CompletableFuture.runAsync(() -> clusterShard.tell(feedShardMsg, sender));
+    }
+
+    private static Supervision.Directive decider(Throwable exception) {
+        if (exception instanceof ParseException) {
+            ParseException e = (ParseException) exception;
+            e.getMsg().committableOffset();
+            log.warn("Cannot parse the message {}", e.getMsg());
+            return Supervision.restart();
+        } else {
+            log.error("Fatal error ocurred", exception);
+            return Supervision.stop();
+        }
     }
 
     private StreamFactory() {

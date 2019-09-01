@@ -5,9 +5,7 @@ import akka.actor.ActorSystem;
 import akka.cluster.sharding.ClusterSharding;
 import akka.cluster.sharding.ClusterShardingSettings;
 import akka.cluster.sharding.ShardRegion.MessageExtractor;
-import com.flutter.example.sgs.node.actor.aggregator.AggregatorShardMsg;
 import com.flutter.example.sgs.node.actor.feed.FeedActor;
-import com.flutter.example.sgs.node.actor.feed.FeedShardMsg;
 import com.flutter.example.sgs.node.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,11 +28,12 @@ public class ClusterFactory {
 
         @Override
         public Object entityMessage(Object message) {
-            if (!(message instanceof FeedShardMsg))
-            {
+            if (message instanceof FeedShardMsg) {
+                return ((FeedShardMsg) message).getFeedUpdateCommand();
+            } else {
                 log.error(ERROR_MSG, message);
+                return null;
             }
-            return message;
         }
 
         @Override

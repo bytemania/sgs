@@ -1,4 +1,4 @@
-package com.flutter.example.sgs.node.actor.feed;
+package com.flutter.example.sgs.cluster;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -9,9 +9,7 @@ import java.io.Serializable;
 @RequiredArgsConstructor(staticName = "of")
 @Getter
 @ToString
-public class FeedShardMsg implements Serializable {
+public class AggregatorShardMsg implements Serializable {
     private static final long serialVersionUID = 1L;
-
     private final String id;
-    private final FeedCommand feedUpdateCommand;
 }

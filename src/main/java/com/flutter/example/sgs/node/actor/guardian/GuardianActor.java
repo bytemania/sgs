@@ -30,8 +30,7 @@ public class GuardianActor extends AbstractActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        control = createStream(getContext().getSystem(),
-                ActorMaterializer.create(getContext()));
+        control = createStream(getContext().getSystem());
     }
 
     @Override
@@ -46,13 +45,12 @@ public class GuardianActor extends AbstractActor {
         return receiveBuilder().build();
     }
 
-    private Consumer.DrainingControl<Done> createStream(ActorSystem system, Materializer materializer) {
+    private Consumer.DrainingControl<Done> createStream(ActorSystem system) {
         ActorRef clusterRegion = ClusterFactory.feedRegionOf(system);
 
         return StreamFactory.inboundStreamOf(
                 ConfigFactory.INSTANCE.getInboundConfig(),
                 system,
-                materializer,
                 self(),
                 clusterRegion);
     }

@@ -2,8 +2,9 @@ package com.flutter.example.sgs.node.util;
 
 import akka.kafka.ConsumerMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.flutter.example.sgs.node.actor.feed.FeedShardMsg;
+import com.flutter.example.sgs.cluster.FeedShardMsg;
 import com.flutter.example.sgs.node.actor.feed.FeedUpdateCommand;
+import com.flutter.example.sgs.node.exception.ParseException;
 import com.flutter.example.sgs.node.model.Feed;
 import com.flutter.example.sgs.node.model.InboudApi;
 import io.vavr.Tuple;
@@ -20,18 +21,15 @@ public class Util {
     public static Tuple2<ConsumerMessage.CommittableMessage, FeedShardMsg> translateInbound(
             ConsumerMessage.CommittableMessage committableMessage) {
         String value = committableMessage.record().value().toString();
-        InboudApi inboudApi;
-        long id;
+
+        InboudApi inboudApi = null;
         try {
             inboudApi = OBJECT_MAPPER.readValue(value, InboudApi.class);
-            id = Long.parseLong(inboudApi.getId());
-        } catch (IOException | NumberFormatException e) {
-            log.error("Error parsing inbound message", e);
-            inboudApi = InboudApi.of("1");
-            id = 1;
+        } catch (IOException e) {
+            throw new ParseException(e, committableMessage);
         }
 
-        String key = Feed.OPTA.toString() + "_" + id;
+        String key = Feed.OPTA.toString() + "_" + inboudApi.getId();
         return Tuple.of(committableMessage, FeedShardMsg.of(key, FeedUpdateCommand.of(inboudApi)));
     }
 
