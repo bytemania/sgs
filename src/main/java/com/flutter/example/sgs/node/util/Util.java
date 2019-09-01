@@ -3,6 +3,7 @@ package com.flutter.example.sgs.node.util;
 import akka.kafka.ConsumerMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flutter.example.sgs.cluster.FeedShardMsg;
+import com.flutter.example.sgs.node.actor.feed.FeedCommand;
 import com.flutter.example.sgs.node.actor.feed.FeedUpdateCommand;
 import com.flutter.example.sgs.node.exception.ParseException;
 import com.flutter.example.sgs.node.model.Feed;
@@ -18,19 +19,26 @@ public class Util {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    private static String generateFeedShardKey(Feed feed, String id) {
+        return feed.toString() + "_" + id;
+    }
+
     public static Tuple2<ConsumerMessage.CommittableMessage, FeedShardMsg> translateInbound(
             ConsumerMessage.CommittableMessage committableMessage) {
-        String value = committableMessage.record().value().toString();
-
-        InboudApi inboudApi = null;
         try {
-            inboudApi = OBJECT_MAPPER.readValue(value, InboudApi.class);
+            String value = committableMessage.record().value().toString();
+            InboudApi inboudApi = OBJECT_MAPPER.readValue(value, InboudApi.class);
+
+            return Tuple.of(committableMessage,
+                    FeedShardMsg.of(generateFeedShardKey(Feed.OPTA, inboudApi.getId()),
+                            FeedUpdateCommand.of(inboudApi)));
         } catch (IOException e) {
             throw new ParseException(e, committableMessage);
         }
+    }
 
-        String key = Feed.OPTA.toString() + "_" + inboudApi.getId();
-        return Tuple.of(committableMessage, FeedShardMsg.of(key, FeedUpdateCommand.of(inboudApi)));
+    public static FeedShardMsg generateFeedShardMessage(Feed feed, String id, FeedCommand command){
+        return FeedShardMsg.of(generateFeedShardKey(feed, id), command);
     }
 
     private Util () {
