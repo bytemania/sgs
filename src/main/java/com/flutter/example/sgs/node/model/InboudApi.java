@@ -9,6 +9,6 @@ import java.io.Serializable;
 @Data
 public class InboudApi implements Serializable {
     private static final long serialVersionUID = 1L;
-
+    private Feed feed;
     private String id;
 }
