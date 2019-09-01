@@ -7,10 +7,12 @@ public class ClusterConfig {
 
     public final int NUMBER_OF_SHARDS;
     public final String SHARD_FEED_REGION_NAME;
+    public final String SHARD_AGGREGATOR_REGION_NAME;
 
     ClusterConfig() {
         final Config CONFIG = ConfigFactory.load().getConfig("cluster-settings");
         NUMBER_OF_SHARDS = CONFIG.getInt("number-of-shards");
         SHARD_FEED_REGION_NAME = CONFIG.getString("shard-feed-region-name");
+        SHARD_AGGREGATOR_REGION_NAME = CONFIG.getString("shard-aggregator-region-name");
     }
 }

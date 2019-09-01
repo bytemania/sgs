@@ -22,17 +22,25 @@ public class FeedActor extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .match(FeedShardMsg.class, this::processeShardMessage)
+                .match(FeedShardMsg.class, this::processShardMessage)
                 .build();
     }
 
-    private void processeShardMessage(FeedShardMsg msg) {
-        FeedUpdateCommand command = msg.getFeedUpdateCommand();
-        processUpdateCommand(command);
+    private void processShardMessage(FeedShardMsg msg) {
+        FeedCommand command = msg.getFeedUpdateCommand();
+        processCommand(command);
     }
 
-    private void processUpdateCommand(FeedUpdateCommand command) {
-        updateData(command.getApi());
+    private void processCommand(FeedCommand command) {
+        if (command instanceof FeedUpdateCommand) {
+            processFeedUpdateCommand((FeedUpdateCommand) command);
+        } else {
+            log.error("Unprocessed Message: {}", command);
+        }
+    }
+
+    private void processFeedUpdateCommand(FeedUpdateCommand feedUpdateCommand) {
+        updateData(feedUpdateCommand.getApi());
     }
 
     private void updateData(InboudApi newData) {
