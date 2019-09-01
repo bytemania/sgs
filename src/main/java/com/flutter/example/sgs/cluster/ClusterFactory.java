@@ -5,6 +5,7 @@ import akka.actor.ActorSystem;
 import akka.cluster.sharding.ClusterSharding;
 import akka.cluster.sharding.ClusterShardingSettings;
 import akka.cluster.sharding.ShardRegion.MessageExtractor;
+import com.flutter.example.sgs.node.actor.aggregator.AggregatorActor;
 import com.flutter.example.sgs.node.actor.feed.FeedActor;
 import com.flutter.example.sgs.node.config.ConfigFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -63,11 +64,12 @@ public class ClusterFactory {
 
         @Override
         public Object entityMessage(Object message) {
-            if (!(message instanceof AggregatorShardMsg))
-            {
+            if (message instanceof AggregatorShardMsg) {
+                return ((AggregatorShardMsg) message).getAggregatorCommand();
+            } else {
                 log.error(ERROR_MSG, message);
+                return null;
             }
-            return message;
         }
 
         @Override
@@ -86,16 +88,24 @@ public class ClusterFactory {
 
     public static ActorRef feedRegionOf(ActorSystem system) {
         final String SHARD_REGION_NAME = ConfigFactory.INSTANCE.getClusterConfig().SHARD_FEED_REGION_NAME;
-
         ClusterShardingSettings settings = ClusterShardingSettings.create(system);
-        return ClusterSharding.get(system).start(SHARD_REGION_NAME, FeedActor.props(), settings, FEED_MESSAGE_EXTRACTOR);
+
+        return ClusterSharding.get(system).start(
+                SHARD_REGION_NAME,
+                FeedActor.props(),
+                settings,
+                FEED_MESSAGE_EXTRACTOR);
     }
 
     public static ActorRef aggregatorRegionOf(ActorSystem system) {
         final String SHARD_AGGREGATOR_REGION_NAME = ConfigFactory.INSTANCE.getClusterConfig().SHARD_AGGREGATOR_REGION_NAME;
-
         ClusterShardingSettings settings = ClusterShardingSettings.create(system);
-        return null;
+
+        return ClusterSharding.get(system).start(
+                SHARD_AGGREGATOR_REGION_NAME,
+                AggregatorActor.props(),
+                settings,
+                AGGREGATOR_MESSAGE_EXTRACTOR);
     }
 
     private ClusterFactory() {
