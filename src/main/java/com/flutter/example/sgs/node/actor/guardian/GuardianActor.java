@@ -7,6 +7,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.kafka.javadsl.Consumer;
 import com.flutter.example.sgs.cluster.ClusterFactory;
+import com.flutter.example.sgs.node.actor.mapping.MappingActor;
 import com.flutter.example.sgs.node.config.ConfigFactory;
 import com.flutter.example.sgs.node.stream.StreamFactory;
 
@@ -21,6 +22,7 @@ public class GuardianActor extends AbstractActor {
     private Consumer.DrainingControl<Done> control;
     private ActorRef feedClusterRegion;
     private ActorRef aggregateClusterRegion;
+    private ActorRef mappingActor;
 
     private GuardianActor() {
     }
@@ -28,18 +30,13 @@ public class GuardianActor extends AbstractActor {
     @Override
     public void preStart() throws Exception {
         super.preStart();
-        ActorSystem system = getContext().getSystem();
-        createClusterRegions(system);
-        control = createStream(system);
+        start();
     }
 
     @Override
     public void postStop() throws Exception {
         super.postStop();
-        log.info("Shutting Down Inbound Stream and Shard Regions");
-        control.drainAndShutdown(getContext().getDispatcher());
-        feedClusterRegion.tell(new ShardRegion.Passivate(PoisonPill.getInstance()), getSelf());
-        aggregateClusterRegion.tell(new ShardRegion.Passivate(PoisonPill.getInstance()), getSelf());
+        stop();
     }
 
     @Override
@@ -47,9 +44,25 @@ public class GuardianActor extends AbstractActor {
         return receiveBuilder().build();
     }
 
+    private void start() {
+        log.info("Starting: Inbound Stream, Shard Regions, Mapping and Publisher Actors");
+        ActorSystem system = getContext().getSystem();
+        createClusterRegions(system);
+        control = createStream(system);
+        createActors(feedClusterRegion);
+    }
+
+    private void stop() {
+        log.info("Shutting Down: Inbound Stream, Shard Regions, Mapping and Publisher Actors");
+        control.drainAndShutdown(getContext().getDispatcher());
+        feedClusterRegion.tell(new ShardRegion.Passivate(PoisonPill.getInstance()), getSelf());
+        aggregateClusterRegion.tell(new ShardRegion.Passivate(PoisonPill.getInstance()), getSelf());
+        stopActors();
+    }
+
     private void createClusterRegions(ActorSystem system) {
-        feedClusterRegion = ClusterFactory.feedRegionOf(system);
         aggregateClusterRegion = ClusterFactory.aggregatorRegionOf(system);
+        feedClusterRegion = ClusterFactory.feedRegionOf(system, aggregateClusterRegion);
     }
 
     private Consumer.DrainingControl<Done> createStream(ActorSystem system) {
@@ -60,4 +73,13 @@ public class GuardianActor extends AbstractActor {
                 self(),
                 feedClusterRegion);
     }
+
+    private void createActors(ActorRef feedClusterRegion) {
+        mappingActor = getContext().actorOf(MappingActor.props(feedClusterRegion), "mappingActor");
+    }
+
+    private void stopActors() {
+        context().stop(mappingActor);
+    }
+
 }

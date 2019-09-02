@@ -86,13 +86,13 @@ public class ClusterFactory {
         }
     };
 
-    public static ActorRef feedRegionOf(ActorSystem system) {
+    public static ActorRef feedRegionOf(ActorSystem system, ActorRef aggregatorRegion) {
         final String SHARD_REGION_NAME = ConfigFactory.INSTANCE.getClusterConfig().SHARD_FEED_REGION_NAME;
         ClusterShardingSettings settings = ClusterShardingSettings.create(system);
 
         return ClusterSharding.get(system).start(
                 SHARD_REGION_NAME,
-                FeedActor.props(),
+                FeedActor.props(aggregatorRegion),
                 settings,
                 FEED_MESSAGE_EXTRACTOR);
     }
