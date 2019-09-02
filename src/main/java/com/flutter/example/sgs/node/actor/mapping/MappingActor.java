@@ -28,7 +28,7 @@ public class MappingActor extends AbstractActor {
         super.preStart();
 
         getContext().getSystem().scheduler().schedule(
-                Duration.ofSeconds(60),
+                Duration.ofSeconds(5),
                 Duration.ofSeconds(60),
                 getSelf(),
                 UpdateMappingCommand.of(Feed.OPTA, "1", "aggregatorId"),

@@ -9,8 +9,9 @@ import java.io.Serializable;
 @RequiredArgsConstructor(staticName = "of")
 @Getter
 @ToString
-public class Ack implements Serializable {
+public class Nack implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final String id;
 }
+

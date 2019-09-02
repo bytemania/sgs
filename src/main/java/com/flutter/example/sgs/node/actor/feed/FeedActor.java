@@ -6,7 +6,10 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.flutter.example.sgs.cluster.Ack;
+import com.flutter.example.sgs.cluster.AggregatorShardMsg;
 import com.flutter.example.sgs.node.actor.aggregator.AggregatorUpdateCommand;
+import com.flutter.example.sgs.node.actor.retry.RetryActor;
+import com.flutter.example.sgs.node.actor.retry.SendRetryCommand;
 import com.flutter.example.sgs.node.model.InboudApi;
 import com.flutter.example.sgs.node.util.Util;
 
@@ -59,10 +62,15 @@ public class FeedActor extends AbstractActor {
 
     private void updateData(String newAggregatorId) {
         var oldData = FeedData.builder().aggregateActorId(data.getAggregateActorId()).data(data.getData()).version(data.getVersion()).lastSentVersion(data.getLastSentVersion()).build();
+
+        boolean firstTimeMapping = data.getAggregateActorId() == null;
+
         data = data.copy(newAggregatorId);
         log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actor:{} AggregatorId RECEIVED:{} NEW_DATA:{} OLD_DATA:{}",
                 getSelf().path(), newAggregatorId, data, oldData);
-        sendToAggregator();
+        if (firstTimeMapping) {
+            sendToAggregator();
+        }
     }
 
     private void updateData(int lastVersionSent) {
@@ -75,7 +83,11 @@ public class FeedActor extends AbstractActor {
     private void sendToAggregator() {
         if (data.getAggregateActorId() != null) {
             AggregatorUpdateCommand aggregatorUpdateCommand = AggregatorUpdateCommand.of(String.valueOf(data.getVersion()), data.getData());
-            aggregatorShardRegion.tell(Util.generateAggregatorShardMessage(data.getAggregateActorId(), aggregatorUpdateCommand), self());
+            AggregatorShardMsg shardMsg = Util.generateAggregatorShardMessage(data.getAggregateActorId(), aggregatorUpdateCommand);
+            SendRetryCommand retryMessage= SendRetryCommand.of(String.valueOf(data.getVersion()), shardMsg);
+
+            ActorRef retry = getContext().getSystem().actorOf(RetryActor.props(5, 3, 3, aggregatorShardRegion));
+            retry.tell(retryMessage, self());
         } else {
             log.info("Cannot send the message data:{}, no aggregatorId defined", data);
         }

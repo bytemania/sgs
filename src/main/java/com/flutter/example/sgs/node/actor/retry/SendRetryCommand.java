@@ -1,16 +1,13 @@
-package com.flutter.example.sgs.cluster;
+package com.flutter.example.sgs.node.actor.retry;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.ToString;
 
 import java.io.Serializable;
 
 @RequiredArgsConstructor(staticName = "of")
 @Getter
-@ToString
-public class Ack implements Serializable {
-    private static final long serialVersionUID = 1L;
-
+public class SendRetryCommand implements Serializable, RetryCommand {
     private final String id;
+    private final Object message;
 }
