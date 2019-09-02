@@ -2,7 +2,9 @@ package com.flutter.example.sgs.node.util;
 
 import akka.kafka.ConsumerMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.flutter.example.sgs.cluster.AggregatorShardMsg;
 import com.flutter.example.sgs.cluster.FeedShardMsg;
+import com.flutter.example.sgs.node.actor.aggregator.AggregatorCommand;
 import com.flutter.example.sgs.node.actor.feed.FeedCommand;
 import com.flutter.example.sgs.node.actor.feed.FeedUpdateCommand;
 import com.flutter.example.sgs.node.exception.ParseException;
@@ -30,7 +32,7 @@ public class Util {
             InboudApi inboudApi = OBJECT_MAPPER.readValue(value, InboudApi.class);
 
             return Tuple.of(committableMessage,
-                    FeedShardMsg.of(generateFeedShardKey(Feed.OPTA, inboudApi.getId()),
+                    FeedShardMsg.of(generateFeedShardKey(inboudApi.getFeed(), inboudApi.getId()),
                             FeedUpdateCommand.of(inboudApi)));
         } catch (IOException e) {
             throw new ParseException(e, committableMessage);
@@ -39,6 +41,10 @@ public class Util {
 
     public static FeedShardMsg generateFeedShardMessage(Feed feed, String id, FeedCommand command){
         return FeedShardMsg.of(generateFeedShardKey(feed, id), command);
+    }
+
+    public static AggregatorShardMsg generateAggregatorShardMessage(String id, AggregatorCommand command) {
+        return AggregatorShardMsg.of(id, command);
     }
 
     private Util () {
