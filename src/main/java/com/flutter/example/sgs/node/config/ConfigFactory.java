@@ -6,6 +6,7 @@ public enum ConfigFactory {
 
     private InboundConfig inboundConfig;
     private ClusterConfig clusterConfig;
+    private RetryConfig retryConfig;
 
     public synchronized InboundConfig getInboundConfig() {
         if (inboundConfig == null) {
@@ -19,5 +20,12 @@ public enum ConfigFactory {
             clusterConfig = new ClusterConfig();
         }
         return clusterConfig;
+    }
+
+    public synchronized RetryConfig getRetryConfig() {
+        if (retryConfig == null) {
+            retryConfig = new RetryConfig();
+        }
+        return retryConfig;
     }
 }

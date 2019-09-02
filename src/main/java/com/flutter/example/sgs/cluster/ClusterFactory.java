@@ -8,6 +8,7 @@ import akka.cluster.sharding.ShardRegion.MessageExtractor;
 import com.flutter.example.sgs.node.actor.aggregator.AggregatorActor;
 import com.flutter.example.sgs.node.actor.feed.FeedActor;
 import com.flutter.example.sgs.node.config.ConfigFactory;
+import com.flutter.example.sgs.node.config.RetryConfig;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -86,13 +87,13 @@ public class ClusterFactory {
         }
     };
 
-    public static ActorRef feedRegionOf(ActorSystem system, ActorRef aggregatorRegion) {
+    public static ActorRef feedRegionOf(ActorSystem system, ActorRef aggregatorRegion, RetryConfig retryConfig) {
         final String SHARD_REGION_NAME = ConfigFactory.INSTANCE.getClusterConfig().SHARD_FEED_REGION_NAME;
         ClusterShardingSettings settings = ClusterShardingSettings.create(system);
 
         return ClusterSharding.get(system).start(
                 SHARD_REGION_NAME,
-                FeedActor.props(aggregatorRegion),
+                FeedActor.props(aggregatorRegion, retryConfig.TRIES, retryConfig.TIMEOUT_SECONDS, retryConfig.INTERVAL_SECONDS),
                 settings,
                 FEED_MESSAGE_EXTRACTOR);
     }

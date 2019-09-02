@@ -62,7 +62,8 @@ public class GuardianActor extends AbstractActor {
 
     private void createClusterRegions(ActorSystem system) {
         aggregateClusterRegion = ClusterFactory.aggregatorRegionOf(system);
-        feedClusterRegion = ClusterFactory.feedRegionOf(system, aggregateClusterRegion);
+        feedClusterRegion = ClusterFactory.feedRegionOf(system, aggregateClusterRegion,
+                ConfigFactory.INSTANCE.getRetryConfig());
     }
 
     private Consumer.DrainingControl<Done> createStream(ActorSystem system) {

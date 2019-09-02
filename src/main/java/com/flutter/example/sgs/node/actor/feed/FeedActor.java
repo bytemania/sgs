@@ -7,6 +7,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import com.flutter.example.sgs.cluster.Ack;
 import com.flutter.example.sgs.cluster.AggregatorShardMsg;
+import com.flutter.example.sgs.cluster.Nack;
 import com.flutter.example.sgs.node.actor.aggregator.AggregatorUpdateCommand;
 import com.flutter.example.sgs.node.actor.retry.RetryActor;
 import com.flutter.example.sgs.node.actor.retry.SendRetryCommand;
@@ -15,18 +16,24 @@ import com.flutter.example.sgs.node.util.Util;
 
 public class FeedActor extends AbstractActor {
 
-    public static Props props(ActorRef aggregatorShardRegion) {
-        return Props.create(FeedActor.class, () -> new FeedActor(aggregatorShardRegion));
+    public static Props props(ActorRef aggregatorShardRegion, int retries, int timeout, int interval) {
+        return Props.create(FeedActor.class, () -> new FeedActor(aggregatorShardRegion, retries, timeout, interval));
     }
 
     private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
     private FeedData data;
-    private ActorRef aggregatorShardRegion;
+    private final ActorRef aggregatorShardRegion;
+    private final int retries;
+    private final int timeout;
+    private final int interval;
 
-    private FeedActor(ActorRef aggregatorShardRegion) {
+    private FeedActor(ActorRef aggregatorShardRegion, int retries, int timeout, int interval) {
         this.aggregatorShardRegion = aggregatorShardRegion;
         this.data = FeedData.builder().version(0).lastSentVersion(0).build();
+        this.retries = retries;
+        this.timeout = timeout;
+        this.interval = interval;
     }
 
     @Override
@@ -35,6 +42,7 @@ public class FeedActor extends AbstractActor {
                 .match(FeedUpdateCommand.class, this::processFeedUpdateCommand)
                 .match(FeedMappingUpdateCommand.class, this::processFeedMappingUpdateCommand)
                 .match(Ack.class, this::processAck)
+                .match(Nack.class, this::processNack)
                 .build();
     }
 
@@ -50,6 +58,10 @@ public class FeedActor extends AbstractActor {
     private void processAck(Ack ack) {
         int lastVersionSent = Integer.parseInt(ack.getId());
         updateData(lastVersionSent);
+    }
+
+    private void processNack(Nack nack) {
+        log.error("Message with version {} not sent.", nack.getId());
     }
 
     private void updateData(InboudApi newData) {
@@ -86,7 +98,7 @@ public class FeedActor extends AbstractActor {
             AggregatorShardMsg shardMsg = Util.generateAggregatorShardMessage(data.getAggregateActorId(), aggregatorUpdateCommand);
             SendRetryCommand retryMessage= SendRetryCommand.of(String.valueOf(data.getVersion()), shardMsg);
 
-            ActorRef retry = getContext().getSystem().actorOf(RetryActor.props(5, 3, 3, aggregatorShardRegion));
+            ActorRef retry = getContext().getSystem().actorOf(RetryActor.props(retries, timeout, interval, aggregatorShardRegion));
             retry.tell(retryMessage, self());
         } else {
             log.info("Cannot send the message data:{}, no aggregatorId defined", data);
