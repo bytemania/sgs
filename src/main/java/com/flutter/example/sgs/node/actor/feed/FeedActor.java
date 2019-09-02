@@ -5,6 +5,7 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import com.flutter.example.sgs.cluster.Ack;
 import com.flutter.example.sgs.node.actor.aggregator.AggregatorUpdateCommand;
 import com.flutter.example.sgs.node.model.InboudApi;
 import com.flutter.example.sgs.node.util.Util;
@@ -30,6 +31,7 @@ public class FeedActor extends AbstractActor {
         return receiveBuilder()
                 .match(FeedUpdateCommand.class, this::processFeedUpdateCommand)
                 .match(FeedMappingUpdateCommand.class, this::processFeedMappingUpdateCommand)
+                .match(Ack.class, this::processAck)
                 .build();
     }
 
@@ -42,17 +44,32 @@ public class FeedActor extends AbstractActor {
         updateData(feedMappingUpdateCommand.getAggregatorId());
     }
 
+    private void processAck(Ack ack) {
+        int lastVersionSent = Integer.parseInt(ack.getId());
+        updateData(lastVersionSent);
+    }
+
     private void updateData(InboudApi newData) {
-        log.info("Actor:{} DATA RECEIVED:{} OLD_DATA:{}", getSelf().path(), newData, data);
+        var oldData = FeedData.builder().aggregateActorId(data.getAggregateActorId()).data(data.getData()).version(data.getVersion()).lastSentVersion(data.getLastSentVersion()).build();
         data = data.copy(newData);
-        log.info("Actor:{} AggregatorId RECEIVED:{} NEW_DATA:{}", getSelf().path(), newData, data);
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actor:{} AggregatorId RECEIVED:{} NEW_DATA:{} OLD_DATA:{}",
+                getSelf().path(), newData, data, oldData);
         sendToAggregator();
     }
 
     private void updateData(String newAggregatorId) {
-        log.info("Actor:{} AggregatorId RECEIVED:{} OLD_DATA:{}", getSelf().path(), newAggregatorId, data);
+        var oldData = FeedData.builder().aggregateActorId(data.getAggregateActorId()).data(data.getData()).version(data.getVersion()).lastSentVersion(data.getLastSentVersion()).build();
         data = data.copy(newAggregatorId);
-        log.info("Actor:{} AggregatorId RECEIVED:{} NEW_DATA:{}", getSelf().path(), newAggregatorId, data);
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actor:{} AggregatorId RECEIVED:{} NEW_DATA:{} OLD_DATA:{}",
+                getSelf().path(), newAggregatorId, data, oldData);
+        sendToAggregator();
+    }
+
+    private void updateData(int lastVersionSent) {
+        var oldData = FeedData.builder().aggregateActorId(data.getAggregateActorId()).data(data.getData()).version(data.getVersion()).lastSentVersion(data.getLastSentVersion()).build();
+        data = data.copy(lastVersionSent);
+        log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actor:{} ACK RECEIVED:{} NEW_DATA:{} OLD_DATA:{}",
+                getSelf().path(), lastVersionSent, data, oldData);
     }
 
     private void sendToAggregator() {
