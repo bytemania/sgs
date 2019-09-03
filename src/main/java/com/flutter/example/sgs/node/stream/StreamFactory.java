@@ -62,7 +62,7 @@ public class StreamFactory {
             log.warn("Cannot parse the message {}", e.getMsg());
             return Supervision.restart();
         } else {
-            log.error("Fatal error ocurred", exception);
+            log.error("Fatal error occurred", exception);
             return Supervision.stop();
         }
     }
