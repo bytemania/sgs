@@ -75,7 +75,7 @@ public class FeedActor extends AbstractActor {
     private void updateData(String newAggregatorId) {
         var oldData = FeedData.builder().aggregateActorId(data.getAggregateActorId()).data(data.getData()).version(data.getVersion()).lastSentVersion(data.getLastSentVersion()).build();
 
-        boolean firstTimeMapping = data.getAggregateActorId() == null;
+        boolean firstTimeMapping = data.getAggregateActorId() == null || !data.getAggregateActorId().equals(newAggregatorId);
 
         data = data.copy(newAggregatorId);
         log.info(">>>>>>>>>>>>>>>>>>>>>>>>>>>>> Actor:{} AggregatorId RECEIVED:{} NEW_DATA:{} OLD_DATA:{}",
