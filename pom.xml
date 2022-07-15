@@ -20,7 +20,7 @@
         <akka.version>2.5.23</akka.version>
         <akka-stream-kafka.version>1.0.5</akka-stream-kafka.version>
 
-        <jackson.version>2.9.9</jackson.version>
+        <jackson.version>2.12.6.1</jackson.version>
 
         <slf4j-simple.version>1.7.28</slf4j-simple.version>
         <vavr.version>0.10.2</vavr.version>
